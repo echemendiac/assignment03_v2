@@ -18,6 +18,7 @@ import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.TestLooperManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -39,6 +40,8 @@ import android.widget.Toast;
 public class MainActivity extends AppCompatActivity implements OnClickListener,
         OnTouchListener {
 
+    //---- Declare Variables Here ----//
+    private static final int REQUESTCODE_STORAGE_PERMISSION = 999;
     ImageView choosenImageView;
     Button choosePicture;
     Button savePicture;
@@ -91,10 +94,20 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
                     ContentValues contentValues = new ContentValues(3);
                     contentValues.put(Media.DISPLAY_NAME, "Draw On Me");
 
+                    Uri imageFileUri = null;
 
+                    for(int i=0;i<100;i++){
+                        if(storagePermitted(MainActivity.this)){
+                            imageFileUri = getContentResolver().insert(Media.EXTERNAL_CONTENT_URI, contentValues);
+                            break;
+                        } else{
+                           TextView tv = findViewById(R.id.thick_tv);
+                           tv.setText("ERROR");
+                           Log.i("onClick","Image did not save. External Write permission was never granted");
+                        }
 
+                    }
 
-                    Uri imageFileUri = getContentResolver().insert(Media.EXTERNAL_CONTENT_URI, contentValues);
 
 
                     try {
@@ -391,6 +404,18 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
         View view1 = findViewById(R.id.layout_1);
 
         view1.setVisibility(View.VISIBLE);
+    }
+    private static boolean storagePermitted(Activity activity) {
+
+        Boolean readPermission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        Boolean writePermission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+
+        if (readPermission && writePermission) {
+            return true;
+        }
+
+        ActivityCompat.requestPermissions(activity, new String[]{ Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE }, REQUESTCODE_STORAGE_PERMISSION);
+        return false;
     }
 
 }
