@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">assignment03_v2</string>
+    <string name="app_name">Draw-A-Pic</string>
+    <string name="menu_button">menu\n^</string>
 </resources>

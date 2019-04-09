@@ -33,6 +33,7 @@ import java.io.OutputStream;
 import android.content.ContentValues;
 import android.graphics.Bitmap.CompressFormat;
 import android.provider.MediaStore.Images.Media;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity implements OnClickListener,
@@ -41,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
     ImageView choosenImageView;
     Button choosePicture;
     Button savePicture;
+    int lineSize; //Stores the line thickness
 
     Bitmap bmp;
     Bitmap alteredBitmap;
@@ -51,11 +53,15 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
     float downy = 0;
     float upx = 0;
     float upy = 0;
+    ColorSelect colorSelect;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //---- Initializing Variables ----//
+        lineSize = 2;
 
         choosenImageView = (ImageView) this.findViewById(R.id.ChoosenImageView);
         choosePicture = (Button) this.findViewById(R.id.ChoosePictureButton);
@@ -68,7 +74,10 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
 
     public void onClick(View v) {
 
-        if (v == choosePicture) {
+        if (v == choosePicture || v.getId() == R.id.layout_2) {
+            View view2 = findViewById(R.id.layout_2);
+            view2.setVisibility(View.INVISIBLE); //turn the splash feature off
+            findViewById(R.id.ChoosenImageView).setVisibility(View.VISIBLE);
             Intent choosePictureIntent = new Intent(
                     Intent.ACTION_PICK,
                     android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -114,8 +123,8 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
                         .getHeight(), bmp.getConfig());
                 canvas = new Canvas(alteredBitmap);
                 paint = new Paint();
-                paint.setColor(Color.GREEN);
-                paint.setStrokeWidth(5);
+                setPaint();
+                setLineWidth();
                 matrix = new Matrix();
                 canvas.drawBitmap(bmp, matrix, paint);
 
@@ -222,4 +231,157 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
                         grantResults);
         }
     }
+
+    /**
+     * This function is the listener for shape selection buttons
+     * @param v Passes in the button view
+     */
+    public void selectThickness(View v) {
+        TextView tv = findViewById(R.id.thick_tv);
+        Log.i("selectThickness", "I am running");
+
+        switch (v.getId()) {
+            case R.id.size2:
+                tv.setText("2px thick");
+                lineSize=2;
+                break;
+            case R.id.size4:
+                tv.setText("4px thick");
+                lineSize=4;
+                break;
+            case R.id.size10:
+                tv.setText("10px thick");
+                lineSize=10;
+                break;
+            case R.id.size15:
+                tv.setText("15px thick");
+                lineSize=15;
+                break;
+            default:
+                tv.setText("ERROR");
+        }
+        setLineWidth();
+    }
+
+    /**
+     * ColorSelect is the inner enum class that holds
+     * the color selection data
+     *
+     */
+    static enum ColorSelect {
+        BLACK, WHITE, RED, GREEN, BLUE, ERROR;
+
+        public int getValue(){
+            switch (this)
+            {
+                case BLACK: return Color.BLACK;
+                case WHITE: return Color.WHITE;
+                case RED: return Color.RED;
+                case GREEN: return Color.GREEN;
+                case BLUE: return Color.BLUE;
+                case ERROR: ;
+                default: return -999;
+            }
+        }
+
+    }
+
+    /**
+     *
+     * This is the onClick listner for all the color buttons
+     * This function gets the color that the user passes in
+     *
+     * @param v
+     */
+    public void selectColor (View v) {
+        Log.i("selectColor", "Select Color was called");
+        ImageView iv = findViewById(R.id.color_iv);
+        switch (v.getId()) {
+            case R.id.black_b:
+                colorSelect = ColorSelect.BLACK;
+                break;
+            case R.id.white_b:
+                colorSelect = ColorSelect.WHITE;
+                break;
+            case R.id.red_b:
+                colorSelect = ColorSelect.RED;
+                break;
+            case R.id.green_b:
+                colorSelect = ColorSelect.GREEN;
+                break;
+            case R.id.blue_b:
+                colorSelect = ColorSelect.BLUE;
+                break;
+            default:
+                colorSelect = ColorSelect.ERROR;
+        }
+        iv.setBackgroundColor(colorSelect.getValue());
+        setPaint();
+    }
+
+    /**
+     * This function is the listener for shape selection buttons
+     * @param v Passes in the button view
+     */
+    public void selectShape(View v){
+        TextView tv = findViewById(R.id.shape_tv);
+
+        switch(v.getId()){
+            case R.id.rectangle_b:
+                tv.setText("Rectangle");
+                break;
+            case R.id.circle_b:
+                tv.setText("Circle");
+                break;
+            case R.id.freeForm_b:
+                tv.setText("Free Form");
+                break;
+            default: tv.setText("ERROR");
+        }
+
+    }
+
+    //---- Setting Paint Parameters ----//
+
+    /**
+     * This function sets the paint color
+     */
+    private void setPaint(){
+        if(colorSelect != null)
+            paint.setColor(colorSelect.getValue());
+        else
+            paint.setColor(Color.BLACK);
+    }
+
+    /**
+     * This function sets the paint line thickness
+     */
+    private void setLineWidth(){
+        if(colorSelect != null)
+            paint.setStrokeWidth(lineSize);
+        else
+            paint.setStrokeWidth(2);
+    }
+
+    /**
+     * This function hides the menu layer
+     *
+     * @param v passes in the button view
+     */
+    public void hideMenu(View v){
+        View view = findViewById(R.id.layout_1);
+        view.setVisibility(View.INVISIBLE);
+    }
+
+    /**
+     * This function shows the menu layer
+     *
+     * @param v passes in the button view
+     */
+    public void showMenu(View v){
+        View view1 = findViewById(R.id.layout_1);
+
+        view1.setVisibility(View.VISIBLE);
+    }
+
 }
