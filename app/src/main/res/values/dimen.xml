@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="activity_vertical_margin">5dp</dimen>
+    <dimen name="activity_horizontal_margin">5dp</dimen>
+    <dimen name="menu_buttons_margin">30dp</dimen>
+
+    <!-- Color Button START -->
+    <dimen name="color_button_square">30dp</dimen>
+    <dimen name="color_button_selected">100dp</dimen>
+    <!-- Color Button END -->
+
+    <dimen name="spacing">10dp</dimen>
+    <dimen name="textSize">20sp</dimen>
+
+</resources>
