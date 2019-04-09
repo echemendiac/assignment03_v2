@@ -83,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
                     android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             startActivityForResult(choosePictureIntent, 0);
         } else if (v == savePicture) {
+            Log.i("onClick","Starting to save the image");
             if (checkPermissionWRITE_EXTERNAL_STORAGE(this)) {
                 if (alteredBitmap != null) {
                     ContentValues contentValues = new ContentValues(3);
