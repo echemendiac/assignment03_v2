@@ -85,11 +85,18 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
         } else if (v == savePicture) {
             Log.i("onClick","Starting to save the image");
             if (checkPermissionWRITE_EXTERNAL_STORAGE(this)) {
+                Log.i("onClick", "App has permission to save image");
                 if (alteredBitmap != null) {
+                    Log.i("onClick", "Bitmap is not null");
                     ContentValues contentValues = new ContentValues(3);
                     contentValues.put(Media.DISPLAY_NAME, "Draw On Me");
 
+
+
+
                     Uri imageFileUri = getContentResolver().insert(Media.EXTERNAL_CONTENT_URI, contentValues);
+
+
                     try {
                         OutputStream imageFileOS = getContentResolver().openOutputStream(imageFileUri);
                         alteredBitmap.compress(CompressFormat.JPEG, 90, imageFileOS);
@@ -97,10 +104,11 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
                         t.show();
 
                     } catch (Exception e) {
-                        Log.v("EXCEPTION", e.getMessage());
+
+                        Log.i("onClick", e.getMessage());
                     }
                 }
-            }
+            }Log.i("onClick", "No permission to save image");
         }
     }
 
