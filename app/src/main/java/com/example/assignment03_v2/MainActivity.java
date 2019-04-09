@@ -96,6 +96,9 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
 
                     Uri imageFileUri = null;
 
+                    //Below we are asking for the android phone to give permission
+                    // to write to the external storage.
+                    // Notice the call to storagePermitted.
                     for(int i=0;i<100;i++){
                         if(storagePermitted(MainActivity.this)){
                             imageFileUri = getContentResolver().insert(Media.EXTERNAL_CONTENT_URI, contentValues);
@@ -405,6 +408,15 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
 
         view1.setVisibility(View.VISIBLE);
     }
+
+    /**
+     * This functions checks if the permission for write to an android phone's
+     * external storage is permitted
+     * @precondition activity cannot be null
+     * @postcondition none
+     * @param activity Pass in the current activity you working with
+     * @return true if permission is granted. false otherwise
+     */
     private static boolean storagePermitted(Activity activity) {
 
         Boolean readPermission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
