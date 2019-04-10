@@ -18,12 +18,13 @@
         android:gravity="center"
         >
 
-        <ImageView
+        <com.example.assignment03_v2.EditImage
 
             android:visibility="invisible"
-            android:id="@+id/ChoosenImageView"
-            android:layout_width="wrap_content"
+            android:id="@+id/edit_image"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
             android:maxWidth="300dp"
             android:maxHeight="500dp"
             android:background="#93acba"
@@ -206,7 +207,47 @@
                 android:onClick="selectShape"
                 android:textColor="@android:color/black"
                 />
-
+            <Button
+                android:id="@+id/symmetry_b"
+                android:text="Symmetry"
+                android:background="@drawable/white_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/spacing"
+                android:onClick="selectShape"
+                android:textColor="@android:color/black"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/new_shape"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/shape_ll"
+            android:layout_margin="@dimen/spacing"
+            android:gravity="center_horizontal">
+            <Button
+                android:id="@+id/oval_b"
+                android:text="Oval"
+                android:background="@drawable/white_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/spacing"
+                android:onClick="selectShape"
+                android:textColor="@android:color/black"
+                />
+            <Button
+                android:id="@+id/borders_b"
+                android:text="Add Borders"
+                android:background="@drawable/white_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/spacing"
+                android:onClick="selectShape"
+                android:textColor="@android:color/black"
+                />
         </LinearLayout>
         <!-- Shape Selection Buttons END -->
 
@@ -217,7 +258,7 @@
             android:textColor="@android:color/white"
             android:textSize="@dimen/textSize"
             android:layout_marginTop="@dimen/spacing"
-            app:layout_constraintTop_toBottomOf="@+id/shape_ll"
+            app:layout_constraintTop_toBottomOf="@+id/new_shape"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_width="wrap_content"

@@ -1,7 +1,5 @@
 package com.example.assignment03_v2;
 
-import java.io.FileNotFoundException;
-
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -9,8 +7,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -18,18 +16,19 @@ import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.TestLooperManager;
+import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
 import android.widget.ImageView;
+
+import java.io.File;
 import java.io.OutputStream;
 import android.content.ContentValues;
 import android.graphics.Bitmap.CompressFormat;
@@ -42,20 +41,20 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
 
     //---- Declare Variables Here ----//
     private static final int REQUESTCODE_STORAGE_PERMISSION = 999;
-    ImageView choosenImageView;
-    Button choosePicture;
-    Button savePicture;
-    int lineSize; //Stores the line thickness
+    private int REQUEST_GET_SINGLE_FILE = 1;
+    private EditImage ei;
+    private Button choosePicture;
+    private Button savePicture;
+    private int lineSize; //Stores the line thickness
+    private Bitmap bm;
+    private Bitmap altered;
 
-    Bitmap bmp;
-    Bitmap alteredBitmap;
-    Canvas canvas;
-    Paint paint;
-    Matrix matrix;
-    float downx = 0;
-    float downy = 0;
-    float upx = 0;
-    float upy = 0;
+
+    private float downX;
+    private float downY;
+    private float upX;
+    private float upY;
+
     ColorSelect colorSelect;
 
     @Override
@@ -66,13 +65,18 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
         //---- Initializing Variables ----//
         lineSize = 2;
 
-        choosenImageView = (ImageView) this.findViewById(R.id.ChoosenImageView);
+        ei = (EditImage) this.findViewById(R.id.edit_image);
         choosePicture = (Button) this.findViewById(R.id.ChoosePictureButton);
         savePicture = (Button) this.findViewById(R.id.SavePictureButton);
 
         savePicture.setOnClickListener(this);
         choosePicture.setOnClickListener(this);
-        choosenImageView.setOnTouchListener(this);
+        ei.setOnTouchListener(this);
+
+        downX = 0;
+        downY = 0;
+        upX = 0;
+        upY = 0;
     }
 
     public void onClick(View v) {
@@ -80,16 +84,16 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
         if (v == choosePicture || v.getId() == R.id.layout_2) {
             View view2 = findViewById(R.id.layout_2);
             view2.setVisibility(View.INVISIBLE); //turn the splash feature off
-            findViewById(R.id.ChoosenImageView).setVisibility(View.VISIBLE);
-            Intent choosePictureIntent = new Intent(
-                    Intent.ACTION_PICK,
-                    android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            startActivityForResult(choosePictureIntent, 0);
+            findViewById(R.id.edit_image).setVisibility(View.VISIBLE);
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("image/*");
+            startActivityForResult(Intent.createChooser(intent, "Select Picture"),REQUEST_GET_SINGLE_FILE);
         } else if (v == savePicture) {
             Log.i("onClick","Starting to save the image");
             if (checkPermissionWRITE_EXTERNAL_STORAGE(this)) {
                 Log.i("onClick", "App has permission to save image");
-                if (alteredBitmap != null) {
+                if (altered != null) {
                     Log.i("onClick", "Bitmap is not null");
                     ContentValues contentValues = new ContentValues(3);
                     contentValues.put(Media.DISPLAY_NAME, "Draw On Me");
@@ -110,12 +114,9 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
                         }
 
                     }
-
-
-
                     try {
                         OutputStream imageFileOS = getContentResolver().openOutputStream(imageFileUri);
-                        alteredBitmap.compress(CompressFormat.JPEG, 90, imageFileOS);
+                        altered.compress(CompressFormat.JPEG, 90, imageFileOS);
                         Toast t = Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT);
                         t.show();
 
@@ -128,64 +129,112 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
         }
     }
 
-    protected void onActivityResult(int requestCode, int resultCode,
-                                    Intent intent) {
-        super.onActivityResult(requestCode, resultCode, intent);
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
 
-        if (resultCode == RESULT_OK) {
-            Uri imageFileUri = intent.getData();
-            try {
-                BitmapFactory.Options bmpFactoryOptions = new BitmapFactory.Options();
-                bmpFactoryOptions.inJustDecodeBounds = true;
-                bmp = BitmapFactory.decodeStream(getContentResolver().openInputStream(
-                        imageFileUri), null, bmpFactoryOptions);
+        try {
+            if (resultCode == RESULT_OK) {
+                if (requestCode == REQUEST_GET_SINGLE_FILE) {
+                    Uri selectedImageUri = data.getData();
+                    // Get the path from the Uri
+                    final String path = getPath(selectedImageUri);
+                    if (path != null) {
+                        File f = new File(path);
+                        selectedImageUri = Uri.fromFile(f);
+                    }
+                    // Set the image in ImageView
+                    bm = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImageUri);
+                    altered = Bitmap.createBitmap(bm.getWidth(), bm.getHeight(), bm.getConfig());
 
-                bmpFactoryOptions.inJustDecodeBounds = false;
-                bmp = BitmapFactory.decodeStream(getContentResolver().openInputStream(
-                        imageFileUri), null, bmpFactoryOptions);
+                    ei.onImageSelect(bm, altered);
 
-                alteredBitmap = Bitmap.createBitmap(bmp.getWidth(), bmp
-                        .getHeight(), bmp.getConfig());
-                canvas = new Canvas(alteredBitmap);
-                paint = new Paint();
-                setPaint();
-                setLineWidth();
-                matrix = new Matrix();
-                canvas.drawBitmap(bmp, matrix, paint);
-
-                choosenImageView.setImageBitmap(alteredBitmap);
-                choosenImageView.setOnTouchListener(this);
-            } catch (Exception e) {
-                Log.v("ERROR", e.toString());
+                    ei.setOnTouchListener(this);
+                    Log.i("*****image getter", "set background image");
+                }
             }
+        } catch (Exception e) {
+            Log.i("FileSelectorActivity", "File select error", e);
         }
+    }
+
+    public String getPath(Uri uri){
+        String path = "";
+
+        //where to look
+        String[] uriForFiles = {MediaStore.Images.Media.DATA};
+
+        //look for your file
+        Cursor cursor = getContentResolver().query(uri, uriForFiles, null, null, null);
+
+        //if found it should be the first and only match
+        //get the index of the match and return as string
+        if (cursor.moveToFirst()) {
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            path = cursor.getString(column_index);
+        }
+        cursor.close();
+        return path;
+
     }
 
     public boolean onTouch(View v, MotionEvent event) {
         int action = event.getAction();
-        switch (action) {
-            case MotionEvent.ACTION_DOWN:
-                downx = event.getX();
-                downy = event.getY();
-                break;
-            case MotionEvent.ACTION_MOVE:
-                upx = event.getX();
-                upy = event.getY();
-                canvas.drawLine(downx, downy, upx, upy, paint);
-                choosenImageView.invalidate();
-                downx = upx;
-                downy = upy;
-                break;
-            case MotionEvent.ACTION_UP:
-                upx = event.getX();
-                upy = event.getY();
-                canvas.drawLine(downx, downy, upx, upy, paint);
-                choosenImageView.invalidate();
-                break;
-            case MotionEvent.ACTION_CANCEL:
-                break;
-            default:
-                break;
+        if(ei.getCurrentMode() == "free form" || ei.getCurrentMode() == "symmetry") {
+            switch (action) {
+                case MotionEvent.ACTION_DOWN:
+                    downX = event.getX();
+                    ei.setDx(downX);
+                    downY = event.getY();
+                    ei.setDy(downY);
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    upX = event.getX();
+                    ei.setUx(upX);
+                    upY = event.getY();
+                    ei.setUy(upY);
+                    ei.drawSomething();
+
+                    downX = upX;
+                    ei.setDx(upX);
+                    downY = upY;
+                    ei.setDy(upY);
+                    break;
+                case MotionEvent.ACTION_UP:
+                    upX = event.getX();
+                    ei.setUx(upX);
+                    upY = event.getY();
+                    ei.setUy(upY);
+
+                    ei.drawSomething();
+                    break;
+                case MotionEvent.ACTION_CANCEL:
+                    break;
+                default:
+                    break;
+
+            }
+        }
+        if(ei.getCurrentMode() != "free form" || ei.getCurrentMode() != "symmetry") {
+            switch (action) {
+                case MotionEvent.ACTION_DOWN:
+                    downX = event.getX();
+                    ei.setDx(downX);
+                    downY = event.getY();
+                    ei.setDy(downY);
+                    break;
+                case MotionEvent.ACTION_UP:
+                    upX = event.getX();
+                    ei.setUx(upX);
+                    upY = event.getY();
+                    ei.setUy(upY);
+
+                    ei.drawSomething();
+                    break;
+                case MotionEvent.ACTION_CANCEL:
+                    break;
+                default:
+                    break;
+            }
         }
         return true;
     }
@@ -268,24 +317,28 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
         switch (v.getId()) {
             case R.id.size2:
                 tv.setText("2px thick");
-                lineSize=2;
+                //lineSize=2;
+                ei.setThickness(2);
                 break;
             case R.id.size4:
                 tv.setText("4px thick");
-                lineSize=4;
+                //lineSize=4;
+                ei.setThickness(4);
                 break;
             case R.id.size10:
                 tv.setText("10px thick");
-                lineSize=10;
+                //lineSize=10;
+                ei.setThickness(10);
                 break;
             case R.id.size15:
                 tv.setText("15px thick");
-                lineSize=15;
+                //lineSize=15;
+                ei.setThickness(15);
                 break;
             default:
                 tv.setText("ERROR");
         }
-        setLineWidth();
+        //setLineWidth();
     }
 
     /**
@@ -324,24 +377,29 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
         switch (v.getId()) {
             case R.id.black_b:
                 colorSelect = ColorSelect.BLACK;
+                ei.setColor(Color.BLACK);
                 break;
             case R.id.white_b:
                 colorSelect = ColorSelect.WHITE;
+                ei.setColor(Color.WHITE);
                 break;
             case R.id.red_b:
                 colorSelect = ColorSelect.RED;
+                ei.setColor(Color.RED);
                 break;
             case R.id.green_b:
                 colorSelect = ColorSelect.GREEN;
+                ei.setColor(Color.GREEN);
                 break;
             case R.id.blue_b:
                 colorSelect = ColorSelect.BLUE;
+                ei.setColor(Color.BLUE);
                 break;
             default:
                 colorSelect = ColorSelect.ERROR;
         }
         iv.setBackgroundColor(colorSelect.getValue());
-        setPaint();
+        //setPaint();
     }
 
     /**
@@ -354,38 +412,32 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
         switch(v.getId()){
             case R.id.rectangle_b:
                 tv.setText("Rectangle");
+                ei.modeSwap(1);
                 break;
             case R.id.circle_b:
                 tv.setText("Circle");
+                ei.modeSwap(2);
                 break;
             case R.id.freeForm_b:
                 tv.setText("Free Form");
+                ei.modeSwap(0);
+                break;
+            case R.id.symmetry_b:
+                tv.setText("Symmetry");
+                ei.modeSwap(3);
+                break;
+            case R.id.oval_b:
+                tv.setText("Oval");
+                ei.modeSwap(4);
+                break;
+            case R.id.borders_b:
+                tv.setText("Borders");
+                ei.modeSwap(5);
+                ei.drawSomething();
                 break;
             default: tv.setText("ERROR");
         }
 
-    }
-
-    //---- Setting Paint Parameters ----//
-
-    /**
-     * This function sets the paint color
-     */
-    private void setPaint(){
-        if(colorSelect != null)
-            paint.setColor(colorSelect.getValue());
-        else
-            paint.setColor(Color.BLACK);
-    }
-
-    /**
-     * This function sets the paint line thickness
-     */
-    private void setLineWidth(){
-        if(colorSelect != null)
-            paint.setStrokeWidth(lineSize);
-        else
-            paint.setStrokeWidth(2);
     }
 
     /**
