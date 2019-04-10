@@ -431,7 +431,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener,
                 ei.modeSwap(4);
                 break;
             case R.id.borders_b:
-                tv.setText("Borders");
+                tv.setText("Free Form");
                 ei.modeSwap(5);
                 ei.drawSomething();
                 break;
